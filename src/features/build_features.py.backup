@@ -1,0 +1,371 @@
+import pandas as pd
+import numpy as np
+
+
+# =========================
+# SAFE ROLLING FUNCTION
+# =========================
+def safe_group_rolling(grouped_series, window, func="mean"):
+
+    shifted = grouped_series.shift(1)
+
+    if func == "mean":
+
+        return (
+            shifted
+            .rolling(window, min_periods=1)
+            .mean()
+        )
+
+    elif func == "std":
+
+        return (
+            shifted
+            .rolling(window, min_periods=1)
+            .std()
+        )
+
+    else:
+        raise ValueError(
+            f"Unknown rolling func: {func}"
+        )
+
+
+# =========================
+# FULL FEATURE BUILD
+# =========================
+def build_features(df):
+
+    df = df.copy()
+
+    # =========================
+    # SORT
+    # =========================
+    df = df.sort_values([
+        "store_id",
+        "product_id",
+        "date"
+    ])
+
+    # =========================
+    # TIME FEATURES
+    # =========================
+    df['month'] = (
+        df['date']
+        .dt.month
+        .astype(np.int16)
+    )
+
+    df['dayofweek'] = (
+        df['date']
+        .dt.dayofweek
+        .astype(np.int8)
+    )
+
+    df['weekofyear'] = (
+        df['date']
+        .dt.isocalendar()
+        .week
+        .astype(np.int16)
+    )
+
+    df['is_weekend'] = (
+        df['dayofweek']
+        .isin([5, 6])
+        .astype(np.int8)
+    )
+
+    # Cyclical encoding
+    df['month_sin'] = np.sin(
+        2 * np.pi * df['month'] / 12
+    )
+
+    df['month_cos'] = np.cos(
+        2 * np.pi * df['month'] / 12
+    )
+
+    df['dow_sin'] = np.sin(
+        2 * np.pi * df['dayofweek'] / 7
+    )
+
+    df['dow_cos'] = np.cos(
+        2 * np.pi * df['dayofweek'] / 7
+    )
+
+    # =========================
+    # GROUPING
+    # =========================
+    group = df.groupby([
+        "store_id",
+        "product_id"
+    ])
+
+    # =========================
+    # LAG FEATURES
+    # =========================
+    for lag in [1, 7, 14, 28]:
+
+        df[f'lag_{lag}'] = (
+            group['sales']
+            .shift(lag)
+            .astype(np.float32)
+        )
+
+    # =========================
+    # ROLLING DEMAND FEATURES
+    # =========================
+    for window in [7, 14, 28]:
+
+        df[f'rolling_mean_{window}'] = (
+            safe_group_rolling(
+                group['sales'],
+                window,
+                "mean"
+            )
+            .astype(np.float32)
+        )
+
+        df[f'rolling_std_{window}'] = (
+            safe_group_rolling(
+                group['sales'],
+                window,
+                "std"
+            )
+            .astype(np.float32)
+        )
+
+    # =========================
+    # TREND FEATURES
+    # =========================
+    df['trend_7_14'] = (
+        df['rolling_mean_7']
+        - df['rolling_mean_14']
+    )
+
+    df['trend_7_28'] = (
+        df['rolling_mean_7']
+        - df['rolling_mean_28']
+    )
+
+    # =========================
+    # DEMAND DYNAMICS
+    # =========================
+    df['velocity'] = (
+        df['lag_1']
+        - df['lag_7']
+    )
+
+    df['acceleration'] = (
+        (df['lag_1'] - df['lag_7'])
+        - (df['lag_7'] - df['lag_14'])
+    )
+
+    # =====================================================
+    # ADVANCED PRICE FEATURES
+    # =====================================================
+
+    # Base price
+    df['price'] = (
+        df['price']
+        .astype(np.float32)
+    )
+
+    # Lag prices
+    df['price_lag_1'] = (
+        group['price']
+        .shift(1)
+        .astype(np.float32)
+    )
+
+    df['price_lag_7'] = (
+        group['price']
+        .shift(7)
+        .astype(np.float32)
+    )
+
+    df['price_lag_28'] = (
+        group['price']
+        .shift(28)
+        .astype(np.float32)
+    )
+
+    # Rolling price stats
+    df['price_avg_7'] = (
+        safe_group_rolling(
+            group['price'],
+            7,
+            "mean"
+        )
+        .astype(np.float32)
+    )
+
+    df['price_avg_28'] = (
+        safe_group_rolling(
+            group['price'],
+            28,
+            "mean"
+        )
+        .astype(np.float32)
+    )
+
+    df['price_std_28'] = (
+        safe_group_rolling(
+            group['price'],
+            28,
+            "std"
+        )
+        .astype(np.float32)
+    )
+
+    # =========================
+    # STRONG ELASTICITY SIGNALS
+    # =========================
+
+    # Daily change
+    df['price_change_1'] = (
+        (df['price'] - df['price_lag_1'])
+        / (df['price_lag_1'] + 1e-6)
+    )
+
+    # Weekly change
+    df['price_change_7'] = (
+        (df['price'] - df['price_lag_7'])
+        / (df['price_lag_7'] + 1e-6)
+    )
+
+    # Monthly change
+    df['price_change_28'] = (
+        (df['price'] - df['price_lag_28'])
+        / (df['price_lag_28'] + 1e-6)
+    )
+
+    # Relative price
+    df['price_vs_avg_7'] = (
+        df['price']
+        / (df['price_avg_7'] + 1e-6)
+    )
+
+    df['price_vs_avg_28'] = (
+        df['price']
+        / (df['price_avg_28'] + 1e-6)
+    )
+
+    # Price zscore
+    df['price_zscore_28'] = (
+        (df['price'] - df['price_avg_28'])
+        / (df['price_std_28'] + 1e-6)
+    )
+
+    # Discount depth
+    df['discount_depth'] = (
+        1.0 - df['price_vs_avg_28']
+    )
+
+    # Momentum
+    df['price_momentum'] = (
+        df['price_change_1']
+        - df['price_change_7']
+    )
+
+    # Volatility
+    df['price_volatility'] = (
+        df['price_std_28']
+        / (df['price_avg_28'] + 1e-6)
+    )
+
+    # Aggressive nonlinear signals
+    df['price_squared'] = (
+        df['price'] ** 2
+    )
+
+    df['log_price'] = np.log1p(
+        df['price']
+    )
+
+    # =========================
+    # PROMOTION FEATURES
+    # =========================
+    df['promo_last_week'] = (
+        group['promotion']
+        .shift(7)
+        .fillna(0)
+        .astype(np.float32)
+    )
+
+    df['promo_rolling_7'] = (
+        group['promotion']
+        .shift(1)
+        .rolling(7, min_periods=1)
+        .sum()
+        .astype(np.float32)
+    )
+
+    # Promotion interaction
+    df['promo_price_interaction'] = (
+        df['promotion']
+        * df['discount_depth']
+    )
+
+    # =========================
+    # HIERARCHICAL FEATURES
+    # =========================
+    df['product_avg'] = (
+        df.groupby('product_id')['sales']
+        .shift(1)
+        .rolling(28, min_periods=1)
+        .mean()
+        .astype(np.float32)
+    )
+
+    df['store_avg'] = (
+        df.groupby('store_id')['sales']
+        .shift(1)
+        .rolling(28, min_periods=1)
+        .mean()
+        .astype(np.float32)
+    )
+
+    df['global_avg'] = (
+        df['sales']
+        .shift(1)
+        .rolling(28, min_periods=1)
+        .mean()
+        .astype(np.float32)
+    )
+
+    # =========================
+    # CLEANUP
+    # =========================
+    df = df.replace(
+        [np.inf, -np.inf],
+        np.nan
+    )
+
+    numeric_cols = df.select_dtypes(
+        include=[np.number]
+    ).columns
+
+    df[numeric_cols] = (
+        df[numeric_cols]
+        .fillna(0)
+    )
+
+    return df
+
+
+# =========================
+# INCREMENTAL FEATURES
+# =========================
+def build_features_incremental(
+    history_df,
+    new_df
+):
+
+    df = pd.concat(
+        [history_df, new_df],
+        ignore_index=True
+    )
+
+    df = build_features(df)
+
+    return df.iloc[-len(new_df):]

@@ -1,0 +1,117 @@
+Category mappings loaded: {'product_id': 50, 'store_id': 50}
+Quantile model loaded.
+
+=== FEATURE IMPORTANCE (P50 MODEL) ===
+             feature  importance
+14             lag_7       11688
+24        trend_7_28       10700
+15            lag_14       10638
+23        trend_7_14        8951
+7         weekofyear        8344
+13             lag_1        8169
+19   rolling_mean_14        8049
+16            lag_28        7902
+18     rolling_std_7        7846
+17    rolling_mean_7        7704
+22    rolling_std_28        7312
+20    rolling_std_14        7134
+47       product_avg        6863
+21   rolling_mean_28        6794
+26      acceleration        6358
+38   price_zscore_28        6310
+36    price_vs_avg_7        6107
+1         product_id        5928
+41  price_volatility        5878
+4            weekday        5792
+25          velocity        5711
+32      price_std_28        5163
+0           store_id        5137
+11           dow_sin        4403
+48         store_avg        4269
+37   price_vs_avg_28        4007
+10         month_cos        3353
+29      price_lag_28        3269
+35   price_change_28        3206
+33    price_change_1        3159
+
+=== PRICE FEATURE IMPORTANCE ===
+                    feature  importance
+38          price_zscore_28        6310
+36           price_vs_avg_7        6107
+41         price_volatility        5878
+32             price_std_28        5163
+37          price_vs_avg_28        4007
+29             price_lag_28        3269
+35          price_change_28        3206
+33           price_change_1        3159
+2                     price        3069
+27              price_lag_1        3026
+34           price_change_7        2943
+30              price_avg_7        2522
+31             price_avg_28        2478
+28              price_lag_7        2474
+46  promo_price_interaction        2228
+40           price_momentum        2168
+42            price_squared         517
+43                log_price          73
+Data loaded: (4565000, 8)
+Normalized columns: ['date', 'store_id', 'product_id', 'sales', 'price', 'promotion', 'weekday', 'month']
+Processing SKU 0: item_1
+SKU=item_1 | BasePrice=21.30 | DemandLow=3.82 | DemandHigh=35.58 | Elasticity=10.0000
+SKU=item_10 | BasePrice=20.59 | DemandLow=3.11 | DemandHigh=18.80 | Elasticity=10.0000
+SKU=item_11 | BasePrice=52.20 | DemandLow=3.58 | DemandHigh=32.94 | Elasticity=10.0000
+SKU=item_12 | BasePrice=60.88 | DemandLow=3.07 | DemandHigh=17.84 | Elasticity=10.0000
+SKU=item_13 | BasePrice=68.19 | DemandLow=3.75 | DemandHigh=30.85 | Elasticity=10.0000
+Processing SKU 5: item_14
+SKU=item_14 | BasePrice=70.38 | DemandLow=3.18 | DemandHigh=19.93 | Elasticity=10.0000
+SKU=item_15 | BasePrice=56.62 | DemandLow=3.06 | DemandHigh=17.61 | Elasticity=10.0000
+SKU=item_16 | BasePrice=43.08 | DemandLow=3.38 | DemandHigh=25.28 | Elasticity=10.0000
+SKU=item_17 | BasePrice=62.32 | DemandLow=2.85 | DemandHigh=14.49 | Elasticity=10.0000
+SKU=item_18 | BasePrice=71.70 | DemandLow=3.62 | DemandHigh=33.76 | Elasticity=10.0000
+Processing SKU 10: item_19
+SKU=item_19 | BasePrice=40.82 | DemandLow=2.72 | DemandHigh=11.61 | Elasticity=10.0000
+SKU=item_2 | BasePrice=38.55 | DemandLow=3.70 | DemandHigh=29.57 | Elasticity=10.0000
+SKU=item_20 | BasePrice=12.20 | DemandLow=4.16 | DemandHigh=61.30 | Elasticity=10.0000
+SKU=item_21 | BasePrice=27.45 | DemandLow=3.68 | DemandHigh=29.45 | Elasticity=10.0000
+SKU=item_22 | BasePrice=47.59 | DemandLow=2.99 | DemandHigh=16.46 | Elasticity=10.0000
+Processing SKU 15: item_23
+SKU=item_23 | BasePrice=46.82 | DemandLow=2.48 | DemandHigh=9.69 | Elasticity=10.0000
+SKU=item_24 | BasePrice=19.06 | DemandLow=3.74 | DemandHigh=32.91 | Elasticity=10.0000
+SKU=item_25 | BasePrice=89.21 | DemandLow=3.53 | DemandHigh=30.41 | Elasticity=10.0000
+SKU=item_26 | BasePrice=47.67 | DemandLow=3.71 | DemandHigh=30.72 | Elasticity=10.0000
+SKU=item_27 | BasePrice=67.62 | DemandLow=3.69 | DemandHigh=30.39 | Elasticity=10.0000
+
+Stopped after 20 SKUs (limit)
+
+Elasticity + Optimization finished.
+Processed SKUs: 20
+
+Scenario SKU scope:
+Decision SKUs: 20
+Scenario rows: 36,520
+
+=== Elasticity Sample ===
+  store_id product_id  elasticity  optimal_price   max_profit
+0  store_1     item_1        10.0      27.689999   960.537690
+1  store_1    item_10        10.0      26.767000   480.889062
+2  store_1    item_11        10.0      63.945001  1990.714196
+3  store_1    item_12        10.0      79.144001  1376.669924
+4  store_1    item_13        10.0      66.485252  2704.189087
+baseline → Profit (P50): 225232.31, Worst: 197693.83, Best: 253352.18
+no_promo → Profit (P50): 218988.89, Worst: 191619.00, Best: 248827.65
+full_promo → Profit (P50): 279515.44, Worst: 247116.75, Best: 300592.38
+weekend_promo → Profit (P50): 231626.75, Worst: 205227.48, Best: 262079.39
+discount_10 → Profit (P50): 226903.82, Worst: 202508.95, Best: 268673.09
+increase_5 → Profit (P50): 211913.28, Worst: 184292.40, Best: 244022.93
+
+=== Scenario Comparison (RISK-AWARE) ===
+                  profit_p50     profit_p10     profit_p90    risk_range
+scenario                                                                
+baseline       225232.306296  197693.834089  253352.176714  55658.342625
+discount_10    226903.824685  202508.950833  268673.088396  66164.137563
+full_promo     279515.436244  247116.750721  300592.380440  53475.629720
+increase_5     211913.284312  184292.400048  244022.926385  59730.526336
+no_promo       218988.893190  191618.999341  248827.646816  57208.647475
+weekend_promo  231626.750401  205227.476899  262079.387607  56851.910708
+
+Saved to: /Users/macbookair/Desktop/Yazan/retail-demand-forecasting/data/forecast_scenarios_output.csv
