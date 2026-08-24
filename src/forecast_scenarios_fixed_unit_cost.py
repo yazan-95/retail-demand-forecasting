@@ -1,3 +1,4 @@
+
 import pandas as pd
 import numpy as np
 import joblib
@@ -52,6 +53,7 @@ def predict_p50_demand(
 
     return float(values[0])
 
+UNIT_COST = 15.0  # Fixed unit cost; adjust based on the business economics
 ELASTICITY_SHOCK_PCT = 0.05
 
 # =========================
@@ -237,6 +239,13 @@ def forecast_scenario(
         p50 = np.clip(preds[0.5], 0, None)
         p90 = np.clip(preds[0.9], 0, None)
 
+        # Enforce quantile monotonicity.
+        # Independent quantile models can produce crossing predictions.
+        p10, p50, p90 = np.sort(
+            np.vstack([p10, p50, p90]),
+            axis=0
+        )
+
         # Recursive update
         current['sales'] = p50
 
@@ -262,23 +271,22 @@ def forecast_scenario(
             p90 * current['price']
         )
 
+        # Fixed unit-cost profit model.
+        # Total cost = demand × UNIT_COST.
         current['cost'] = (
-            current['price'] * 0.7
+            p50 * UNIT_COST
         )
 
         current['profit_p10'] = (
-            current['revenue_p10']
-            - current['cost']
+            p10 * (current['price'] - UNIT_COST)
         )
 
         current['profit_p50'] = (
-            current['revenue_p50']
-            - current['cost']
+            p50 * (current['price'] - UNIT_COST)
         )
 
         current['profit_p90'] = (
-            current['revenue_p90']
-            - current['cost']
+            p90 * (current['price'] - UNIT_COST)
         )
 
         current['risk_range'] = (
@@ -695,9 +703,7 @@ def compute_elasticities(
                 demand = max(demand, 0)
 
                 revenue = demand * price
-
-                cost = price * 0.70
-
+                cost = demand * UNIT_COST
                 profit = revenue - cost
 
                 if profit > best_profit:
@@ -1010,3 +1016,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

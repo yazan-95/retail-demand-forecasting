@@ -11,18 +11,23 @@ def safe_group_rolling(grouped_series, window, func="mean"):
 
     if func == "mean":
 
-        return (
-            shifted
-            .rolling(window, min_periods=1)
-            .mean()
+        return grouped_series.transform(
+            lambda x: (
+                x.shift(1)
+                .rolling(window, min_periods=1)
+                .mean()
+            )
         )
+
 
     elif func == "std":
 
-        return (
-            shifted
-            .rolling(window, min_periods=1)
-            .std()
+        return grouped_series.transform(
+            lambda x: (
+                x.shift(1)
+                .rolling(window, min_periods=1)
+                .std()
+            )
         )
 
     else:
@@ -39,13 +44,22 @@ def build_features(df):
     df = df.copy()
 
     # =========================
+    # INPUT COLUMN NORMALIZATION
+    # =========================
+    if "item_id" in df.columns and "product_id" not in df.columns:
+        df = df.rename(columns={"item_id": "product_id"})
+
+    if "promo" in df.columns and "promotion" not in df.columns:
+        df = df.rename(columns={"promo": "promotion"})
+
+    # =========================
     # SORT
     # =========================
     df = df.sort_values([
         "store_id",
         "product_id",
         "date"
-    ])
+    ]).reset_index(drop=True)
 
     # =========================
     # TIME FEATURES

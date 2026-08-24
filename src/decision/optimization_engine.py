@@ -1,3 +1,14 @@
+"""
+LEGACY MODULE – NOT USED IN PRODUCTION.
+
+This module was part of an earlier prototype using a 19/33-feature schema.
+The current production elasticity and optimization logic lives in:
+    src/forecast_scenarios.py
+using the 50-feature model aligned with artifacts/lgbm_quantile_models.pkl.
+
+Do not modify this file unless intentionally refactoring legacy code.
+"""
+
 import numpy as np
 import pandas as pd
 
